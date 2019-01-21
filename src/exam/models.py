@@ -26,3 +26,18 @@ class ExamSheet(models.Model):
 
     def __str__(self):
         return self.description
+
+
+class ExamTask(models.Model):
+    exam_sheet = models.ForeignKey(
+        'ExamSheet',
+        related_name='tasks',
+        on_delete=models.CASCADE
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    answer = models.TextField(blank=True, null=True)
+    points = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.title} in exam sheet {self.exam_sheet.id}'

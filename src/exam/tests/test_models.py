@@ -19,3 +19,18 @@ class ModelTests(TestCase):
         )
 
         self.assertEqual(str(exam_sheet), exam_sheet.description)
+
+    def test_exam_task_str(self):
+        """Test exam task str representation"""
+        exam_sheet = models.ExamSheet.objects.create(
+            owner=sample_user(),
+            description='Test'
+        )
+        exam_task = models.ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title='First task'
+        )
+
+        self.assertEqual(
+            str(exam_task),
+            f'{exam_task.title} in exam sheet {exam_sheet.id}')
