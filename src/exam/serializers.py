@@ -8,5 +8,5 @@ class ExamSheetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ExamSheet
-        fields = ('id', 'owner', 'student', 'description', 'grade')
-        read_only_fields = ('id', 'owner')
+        fields = ('id', 'owner', 'student', 'description', 'grade', 'is_archived')
+        read_only_fields = ('id', 'owner', 'is_archived')

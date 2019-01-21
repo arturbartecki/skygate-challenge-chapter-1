@@ -99,3 +99,23 @@ class PrivateExamApiTests(TestCase):
         res = self.client.post(EXAM_SHEETS_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_retreive_exam_list_with_archived_status(self):
+        """Test that exam list doesn't show archived exam sheets"""
+        archived = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test object',
+            is_archived=True
+        )
+        valid_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description='2nd Test object',
+        )
+
+        res = self.client.get(EXAM_SHEETS_URL)
+
+        serializer1 = ExamSheetSerializer(archived)
+        serializer2 = ExamSheetSerializer(valid_sheet)
+
+        self.assertNotIn(serializer1.data, res.data)
+        self.assertIn(serializer2.data, res.data)

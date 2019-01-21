@@ -14,8 +14,10 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        """Return exam sheets owned by request user"""
-        return self.queryset.filter(owner=self.request.user)
+        """Return exam sheets owned by request user that are not archived"""
+        return self.queryset.filter(
+            owner=self.request.user,
+            is_archived=0)
 
     def perform_create(self, serializer):
         """Create a new exam sheet"""
