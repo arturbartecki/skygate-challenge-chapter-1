@@ -12,6 +12,11 @@ from exam.serializers import ExamSheetSerializer
 EXAM_SHEETS_URL = reverse('exam:examsheet-list')
 
 
+def detail_url(exam_sheet_id):
+    """Retur exam sheet detail url"""
+    return reverse('exam:examsheet-detail', args=[exam_sheet_id])
+
+
 class PublicExamApiTests(TestCase):
     """Test if exam API is available without login"""
 
@@ -99,7 +104,7 @@ class PrivateExamApiTests(TestCase):
         res = self.client.post(EXAM_SHEETS_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     def test_retreive_exam_list_with_archived_status(self):
         """Test that exam list doesn't show archived exam sheets"""
         archived = ExamSheet.objects.create(
@@ -119,3 +124,40 @@ class PrivateExamApiTests(TestCase):
 
         self.assertNotIn(serializer1.data, res.data)
         self.assertIn(serializer2.data, res.data)
+
+    def test_partial_update_exam_sheet(self):
+        """Test updating exam sheet with patch"""
+        grade = 'F'
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test description',
+            grade=grade
+        )
+        payload = {
+            'description': 'New description',
+        }
+        url = detail_url(exam_sheet.id)
+        self.client.patch(url, payload)
+
+        exam_sheet.refresh_from_db()
+        self.assertEqual(exam_sheet.description, payload['description'])
+        self.assertEqual(exam_sheet.grade, grade)
+
+    def test_full_update_exam_sheet(self):
+        """Test updating a exam sheet with put"""
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test description',
+            grade='F'
+        )
+        payload = {
+            'description': 'New description',
+            'grade': 'B'
+        }
+
+        url = detail_url(exam_sheet.id)
+        self.client.put(url, payload)
+
+        exam_sheet.refresh_from_db()
+        self.assertEqual(exam_sheet.description, payload['description'])
+        self.assertEqual(exam_sheet.grade, payload['grade'])
