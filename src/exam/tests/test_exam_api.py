@@ -5,9 +5,10 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from exam.models import ExamSheet
+from exam.models import ExamSheet, ExamTask
 
-from exam.serializers import ExamSheetSerializer
+from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, \
+                             ExamTaskSerializer
 
 EXAM_SHEETS_URL = reverse('exam:examsheet-list')
 
@@ -124,6 +125,37 @@ class PrivateExamApiTests(TestCase):
 
         self.assertNotIn(serializer1.data, res.data)
         self.assertIn(serializer2.data, res.data)
+
+    def test_retrieve_exam_sheet_detail(self):
+        """Test viewing an exam_sheet detail"""
+        exam_sheet1 = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test sheet',
+        )
+        exam_sheet2 = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test sheet 2'
+        )
+        exam_task1 = ExamTask.objects.create(
+            exam_sheet=exam_sheet1,
+            title='Test title'
+        )
+        exam_task2 = ExamTask.objects.create(
+            exam_sheet=exam_sheet2,
+            title='Test title 2'
+        )
+
+        url = detail_url(exam_sheet1.id)
+        res = self.client.get(url)
+
+        serializer = ExamSheetDetailSerializer(exam_sheet1)
+
+        task_serializer1 = ExamTaskSerializer(exam_task1)
+        task_serializer2 = ExamTaskSerializer(exam_task2)
+
+        self.assertEqual(res.data, serializer.data)
+        self.assertIn(task_serializer1.data, res.data['tasks'])
+        self.assertNotIn(task_serializer2.data, res.data['tasks'])
 
     def test_partial_update_exam_sheet(self):
         """Test updating exam sheet with patch"""

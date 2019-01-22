@@ -3,7 +3,7 @@ from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from exam.models import ExamSheet
-from exam.serializers import ExamSheetSerializer
+from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer
 
 
 class ExamSheetViewSet(viewsets.ModelViewSet):
@@ -17,7 +17,14 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
         """Return exam sheets owned by request user that are not archived"""
         return self.queryset.filter(
             owner=self.request.user,
-            is_archived=0)
+            is_archived=0
+        )
+
+    def get_serializer_class(self):
+        """Return appropriate serializer class for ExamSheet viewset"""
+        if self.action == 'retrieve':
+            return ExamSheetDetailSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer):
         """Create a new exam sheet"""
