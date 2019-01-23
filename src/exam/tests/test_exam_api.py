@@ -11,6 +11,7 @@ from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, \
                              ExamTaskSerializer
 
 EXAM_SHEETS_URL = reverse('exam:examsheet-list')
+ARCHIVED_EXAM_SHEETS_URL = reverse('exam:examsheet-archive-list')
 
 
 def detail_url(exam_sheet_id):
@@ -193,3 +194,27 @@ class PrivateExamApiTests(TestCase):
         exam_sheet.refresh_from_db()
         self.assertEqual(exam_sheet.description, payload['description'])
         self.assertEqual(exam_sheet.grade, payload['grade'])
+
+    def test_archived_exam_sheet_list(self):
+        """Test list archived sheets view """
+        ExamSheet.objects.create(
+            owner=self.user,
+            description='archived sheet',
+            is_archived=True
+        )
+        ExamSheet.objects.create(
+            owner=self.user,
+            description='active sheet'
+        )
+
+        res = self.client.get(ARCHIVED_EXAM_SHEETS_URL)
+
+        archived_sheets = ExamSheet.objects.filter(
+            owner=self.user,
+            is_archived=True
+        )
+        serializer = ExamSheetSerializer(archived_sheets, many=True)
+        
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data, serializer.data)
