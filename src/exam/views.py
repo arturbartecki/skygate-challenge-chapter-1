@@ -5,7 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from exam.models import ExamSheet
-from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, ExamSheetArchiveSerializer
+from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, \
+                            ExamSheetArchiveSerializer
+from exam.permissions import IsOwnerOrReadOnly
 
 
 class ExamSheetViewSet(viewsets.ModelViewSet):
@@ -13,21 +15,25 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
     serializer_class = ExamSheetSerializer
     queryset = ExamSheet.objects.all()
     authentication_classes = (BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
 
     def get_queryset(self):
         """Return queryset depending on action"""
-        if self.action == 'archive_list':
+        if self.action in ['retrieve', 'not_filtered_list']:
+            # Base queryset without filtering
+            return self.queryset
+        elif self.action == 'archive_list':
             # Queryet for archived exam sheet list
             return self.queryset.filter(
                 owner=self.request.user,
                 is_archived=1
             )
         elif self.action == 'change_archive_status':
-            # Queryset without filtering is_archive for changing is_archive state
+            # Queryset without filtering is_archive
+            # for changing is_archive state
             return self.queryset.filter(
-            owner=self.request.user
-        )
+                owner=self.request.user
+            )
         # Basic queryset without archived exam sheets
         return self.queryset.filter(
             owner=self.request.user,
@@ -40,7 +46,7 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
             # Serializer that shows details of tasks
             return ExamSheetDetailSerializer
         elif self.action == 'change_archive_status':
-            #Serializer only with id and is_archived status
+            # Serializer only with id and is_archived status
             return ExamSheetArchiveSerializer
         return self.serializer_class
 
@@ -49,21 +55,23 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     # Cutom actions and views for exam sheets
-
     @action(detail=False, url_path='archived')
     def archive_list(self, request):
         """Get list of archived sheets"""
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
-    # Both versions of 'change_archive_status' work. 
+    # Both versions of 'change_archive_status' work.
     # I'm not sure if using method 'GET' is acceptable.
 
-    @action(methods=['GET'], detail=True, url_path='archive', url_name='archive')
+    @action(
+        methods=['GET'], detail=True,
+        url_path='archive', url_name='archive'
+    )
     def change_archive_status(self, request, pk=None):
         """Change is_archived status"""
         exam_sheet = self.get_object()
-        if exam_sheet.is_archived == True:
+        if exam_sheet.is_archived:
             data = {'is_archived': False}
         else:
             data = {'is_archived': True}
@@ -79,8 +87,11 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # @action(methods=['PATCH'], detail=True, url_path='archive', url_name='archive')
+
+    # @action(
+    #     methods=['PATCH'], detail=True,
+    #     url_path='archive', url_name='archive'
+    # )
     # def change_archive_status(self, request, pk=None):
     #     """Change is_archived status"""
     #     exam_sheet = self.get_object()
@@ -106,3 +117,10 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
     #         serializer.errors,
     #         status=status.HTTP_400_BAD_REQUEST
     #     )
+
+    @action(detail=False, url_path='nofilter', url_name='nofilter')
+    def not_filtered_list(self, request):
+        """Get list of every sheet"""
+        # print(self.action)
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(serializer.data)

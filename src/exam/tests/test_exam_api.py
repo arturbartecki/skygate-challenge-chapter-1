@@ -7,10 +7,12 @@ from rest_framework.test import APIClient
 
 from exam.models import ExamSheet, ExamTask
 
-from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, ExamTaskSerializer
+from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, \
+                            ExamTaskSerializer
 
 EXAM_SHEETS_URL = reverse('exam:examsheet-list')
 ARCHIVED_EXAM_SHEETS_URL = reverse('exam:examsheet-archive-list')
+NO_FILTERING_EXAM_SHEETS_URL = reverse('exam:examsheet-nofilter')
 
 
 def detail_url(exam_sheet_id):
@@ -237,10 +239,10 @@ class PrivateExamApiTests(TestCase):
         url = archive_sheet_url(exam_sheet.id)
         res = self.client.get(url)
         exam_sheet.refresh_from_db()
-        
+
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(exam_sheet.is_archived, True)
-    
+
     def test_change_status_to_archive_false(self):
         """Test that archive view can change exam sheet status to false"""
         exam_sheet = ExamSheet.objects.create(
@@ -252,7 +254,7 @@ class PrivateExamApiTests(TestCase):
         url = archive_sheet_url(exam_sheet.id)
         res = self.client.get(url)
         exam_sheet.refresh_from_db()
-        
+
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(exam_sheet.is_archived, False)
 
@@ -267,10 +269,10 @@ class PrivateExamApiTests(TestCase):
     #     url = archive_sheet_url(exam_sheet.id)
     #     res = self.client.patch(url)
     #     exam_sheet.refresh_from_db()
-        
+
     #     self.assertEqual(res.status_code, status.HTTP_200_OK)
     #     self.assertEqual(exam_sheet.is_archived, True)
-    
+
     # def test_change_status_to_archive_false(self):
     #     """Test that archive view can change exam sheet status to false"""
     #     exam_sheet = ExamSheet.objects.create(
@@ -282,7 +284,49 @@ class PrivateExamApiTests(TestCase):
     #     url = archive_sheet_url(exam_sheet.id)
     #     res = self.client.patch(url)
     #     exam_sheet.refresh_from_db()
-        
+
     #     self.assertEqual(res.status_code, status.HTTP_200_OK)
     #     self.assertEqual(exam_sheet.is_archived, False)
-        
+
+    def test_exam_sheet_deletion(self):
+        """Test that viewset can delete exam_sheet object"""
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description="Test 1"
+        )
+        exam_sheet2 = ExamSheet.objects.create(
+            owner=self.user,
+            description="Test 2"
+        )
+        url = detail_url(exam_sheet.id)
+        self.client.delete(url)
+
+        sheets_left = ExamSheet.objects.all()
+
+        self.assertEqual(len(sheets_left), 1)
+        self.assertIn(exam_sheet2, sheets_left)
+
+    def test_exam_sheet_list_without_filtering(self):
+        """Test view that shows every exam sheet"""
+        user2 = get_user_model().objects.create_user(
+            username='testuser2',
+            password='testpassword'
+        )
+        ExamSheet.objects.create(
+            owner=self.user,
+            description="Test sheet"
+        )
+        ExamSheet.objects.create(
+            owner=self.user,
+            description='Test sheet2',
+            is_archived=True
+        )
+        ExamSheet.objects.create(
+            owner=user2,
+            description='Test sheet3'
+        )
+
+        res = self.client.get(NO_FILTERING_EXAM_SHEETS_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 3)
