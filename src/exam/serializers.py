@@ -30,3 +30,10 @@ class ExamTaskSerializer(serializers.ModelSerializer):
 class ExamSheetDetailSerializer(ExamSheetSerializer):
     """Serializer for exam sheet detail views"""
     tasks = ExamTaskSerializer(many=True)
+
+
+class ExamSheetArchiveSerializer(serializers.ModelSerializer):
+    """Serializer for changing is_archived status"""
+    class Meta:
+        model = ExamSheet
+        fields = ('id', 'is_archived')

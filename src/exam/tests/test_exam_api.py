@@ -7,16 +7,20 @@ from rest_framework.test import APIClient
 
 from exam.models import ExamSheet, ExamTask
 
-from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, \
-                             ExamTaskSerializer
+from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, ExamTaskSerializer
 
 EXAM_SHEETS_URL = reverse('exam:examsheet-list')
 ARCHIVED_EXAM_SHEETS_URL = reverse('exam:examsheet-archive-list')
 
 
 def detail_url(exam_sheet_id):
-    """Retur exam sheet detail url"""
+    """Return exam sheet detail url"""
     return reverse('exam:examsheet-detail', args=[exam_sheet_id])
+
+
+def archive_sheet_url(exam_sheet_id):
+    """Return url that changes archive status"""
+    return reverse('exam:examsheet-archive', args=[exam_sheet_id])
 
 
 class PublicExamApiTests(TestCase):
@@ -214,7 +218,71 @@ class PrivateExamApiTests(TestCase):
             is_archived=True
         )
         serializer = ExamSheetSerializer(archived_sheets, many=True)
-        
+
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data, serializer.data)
+
+    # Both versions of  action 'change_archive_status' are tested
+    # Commented part tests action with method='PATCH'
+
+    def test_change_status_to_archive_true(self):
+        """Test that archive view can change exam sheet status to true"""
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test description',
+            is_archived=False
+        )
+
+        url = archive_sheet_url(exam_sheet.id)
+        res = self.client.get(url)
+        exam_sheet.refresh_from_db()
+        
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(exam_sheet.is_archived, True)
+    
+    def test_change_status_to_archive_false(self):
+        """Test that archive view can change exam sheet status to false"""
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test description',
+            is_archived=True
+        )
+
+        url = archive_sheet_url(exam_sheet.id)
+        res = self.client.get(url)
+        exam_sheet.refresh_from_db()
+        
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(exam_sheet.is_archived, False)
+
+    # def test_change_status_to_archive_true(self):
+    #     """Test that archive view can change exam sheet status to true"""
+    #     exam_sheet = ExamSheet.objects.create(
+    #         owner=self.user,
+    #         description='Test description',
+    #         is_archived=False
+    #     )
+
+    #     url = archive_sheet_url(exam_sheet.id)
+    #     res = self.client.patch(url)
+    #     exam_sheet.refresh_from_db()
+        
+    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(exam_sheet.is_archived, True)
+    
+    # def test_change_status_to_archive_false(self):
+    #     """Test that archive view can change exam sheet status to false"""
+    #     exam_sheet = ExamSheet.objects.create(
+    #         owner=self.user,
+    #         description='Test description',
+    #         is_archived=True
+    #     )
+
+    #     url = archive_sheet_url(exam_sheet.id)
+    #     res = self.client.patch(url)
+    #     exam_sheet.refresh_from_db()
+        
+    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(exam_sheet.is_archived, False)
+        
