@@ -23,7 +23,7 @@ class ExamTaskSerializer(serializers.ModelSerializer):
     """Serializer for exam task"""
     class Meta:
         model = ExamTask
-        fields = ('id', 'title', 'description', 'answer', 'points')
+        fields = ('id', 'exam_sheet', 'title', 'description', 'answer', 'points')
         read_only_fields = ('id',)
 
 

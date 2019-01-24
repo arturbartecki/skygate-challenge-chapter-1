@@ -14,6 +14,8 @@ EXAM_SHEETS_URL = reverse('exam:examsheet-list')
 ARCHIVED_EXAM_SHEETS_URL = reverse('exam:examsheet-archive-list')
 NO_FILTERING_EXAM_SHEETS_URL = reverse('exam:examsheet-nofilter')
 
+EXAM_TASK_URL = reverse('exam:examtask-list')
+
 
 def detail_url(exam_sheet_id):
     """Return exam sheet detail url"""
@@ -23,6 +25,11 @@ def detail_url(exam_sheet_id):
 def archive_sheet_url(exam_sheet_id):
     """Return url that changes archive status"""
     return reverse('exam:examsheet-archive', args=[exam_sheet_id])
+
+
+def exam_tasks_for_sheet(exam_sheet_id):
+    """Url for retrieving list of tasks for exam sheet"""
+    return reverse('exam:examtask-sheet', args=[exam_sheet_id])
 
 
 class PublicExamApiTests(TestCase):
@@ -330,3 +337,85 @@ class PrivateExamApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 3)
+
+
+class PublicExamTaskApiTests(TestCase):
+    """Test if exam task API is available without login"""
+
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_exam_task_without_login(self):
+        """Test if login is required for retrieving exam tasks"""
+        
+        res = self.client.get(EXAM_TASK_URL)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PrivateExamTaskApiTests(TestCase):
+    """Test exam task api with authorized user"""
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username='arturbartecki',
+            password='testpassword'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+    
+    def test_exam_task_list_for_exam_sheet(self):
+        """Test that view list all exam tasks for given exam sheet"""
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description="test exam sheet"
+        )
+        exam_sheet2 = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test exam sheet 2'
+        )
+        exam_task = ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title='Task 1'
+        )
+        ExamTask.objects.create(
+            exam_sheet=exam_sheet2,
+            title='Task 2'
+        )
+        url = exam_tasks_for_sheet(exam_sheet.id)
+        res = self.client.get(url)
+
+        serializer = ExamTaskSerializer(exam_task)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertIn(serializer.data, res.data)
+    
+    def test_exam_task_list_for_user(self):
+        """Test that view list all exam tasks for given user"""
+        user2 = get_user_model().objects.create_user(
+            username='testuser123',
+            password='testpassword123'
+        )
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description="test description"
+        )
+        exam_sheet2 = ExamSheet.objects.create(
+            owner=user2,
+            description='Test description2'
+        )
+        exam_task = ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title='Test title'
+        )
+        exam_task2 = ExamTask.objects.create(
+            exam_sheet=exam_sheet2,
+            title='Test title2'
+        )
+
+        res = self.client.get(EXAM_TASK_URL)
+        serializer = ExamTaskSerializer(exam_task)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertIn(serializer.data, res.data)

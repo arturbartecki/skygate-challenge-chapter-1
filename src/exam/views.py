@@ -4,9 +4,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from exam.models import ExamSheet
+from exam.models import ExamSheet, ExamTask
 from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, \
-                            ExamSheetArchiveSerializer
+                            ExamSheetArchiveSerializer, ExamTaskSerializer
 from exam.permissions import IsOwnerOrReadOnly
 
 
@@ -124,3 +124,32 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
         # print(self.action)
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(serializer.data)
+
+
+class ExamTaskViewSet(viewsets.ModelViewSet):
+    """Manage exam sheets in database"""
+    serializer_class = ExamTaskSerializer
+    queryset = ExamTask.objects.all()
+    authentication_classes = (BasicAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        """Return queryset depending on action"""
+        # Queryset without filtering out by user
+        if self.action == 'task_list_for_sheet':
+            return self.queryset
+        # Basic exam task list for requesting user
+        return self.queryset.filter(
+            exam_sheet__owner =  self.request.user
+        )
+
+    def get_serializer_class(self):
+        """Return appropriate serializer class for ExamTask viewset"""
+        return self.serializer_class
+    
+    @action(detail=True, url_path='sheet', url_name='sheet')
+    def task_list_for_sheet(self, request, pk=None):
+        """Get list of all tasks for given sheet pk"""
+        obj = self.get_queryset().filter(exam_sheet__pk=pk)
+        return Response(self.get_serializer(obj, many=True).data)
+    
