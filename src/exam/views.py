@@ -21,6 +21,10 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return queryset depending on action"""
+        # Check if there is student query param
+        student = self.request.query_params.get('student')
+        if student:
+            self.queryset = self.queryset.filter(student=student)
         if self.action in ['retrieve', 'not_filtered_list']:
             # Base queryset without filtering
             return self.queryset

@@ -348,6 +348,35 @@ class PrivateExamApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 3)
 
+    def test_exam_sheet_list_filter_by_students(self):
+        """Test if passing student query param filters out sheets"""
+        user2 = get_user_model().objects.create_user(
+            username='testuser2',
+            password='testpassword123'
+        )
+        user3 = get_user_model().objects.create_user(
+            username='testuser3',
+            password='tespassword123'
+        )
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test 1',
+            student=user2
+        )
+        exam_sheet2 = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test 2',
+            student=user3
+        )
+        res = self.client.get(
+            EXAM_SHEETS_URL,
+            {'student': user2.id}
+        )
+        serializer1 = ExamSheetSerializer(exam_sheet)
+        serializer2 = ExamSheetSerializer(exam_sheet2)
+
+        self.assertIn(serializer1.data, res.data)
+        self.assertNotIn(serializer2.data, res.data)
 
 class PublicExamTaskApiTests(TestCase):
     """Test if exam task API is available without login"""
@@ -564,3 +593,4 @@ class PrivateExamTaskApiTests(TestCase):
         exam_task.refresh_from_db()
 
         self.assertEqual(exam_task.title, base_title)
+
