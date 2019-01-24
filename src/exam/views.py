@@ -6,8 +6,10 @@ from rest_framework.response import Response
 
 from exam.models import ExamSheet, ExamTask
 from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, \
-                            ExamSheetArchiveSerializer, ExamTaskSerializer
-from exam.permissions import IsOwnerOrReadOnly
+                            ExamSheetArchiveSerializer, ExamTaskSerializer, \
+                            ExamTaskStudentSerializer
+from exam.permissions import IsOwnerOrReadOnly,IsExamTaskOwnerOrReadOnly, \
+                            IsStudentOrOwnerOrReadOnly
 
 
 class ExamSheetViewSet(viewsets.ModelViewSet):
@@ -131,25 +133,43 @@ class ExamTaskViewSet(viewsets.ModelViewSet):
     serializer_class = ExamTaskSerializer
     queryset = ExamTask.objects.all()
     authentication_classes = (BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsExamTaskOwnerOrReadOnly)
 
     def get_queryset(self):
         """Return queryset depending on action"""
         # Queryset without filtering out by user
-        if self.action == 'task_list_for_sheet':
+        if self.action in ['task_list_for_sheet', 'retrieve', 'answer']:
             return self.queryset
         # Basic exam task list for requesting user
         return self.queryset.filter(
-            exam_sheet__owner =  self.request.user
+            exam_sheet__owner=self.request.user
         )
 
     def get_serializer_class(self):
         """Return appropriate serializer class for ExamTask viewset"""
         return self.serializer_class
-    
+
     @action(detail=True, url_path='sheet', url_name='sheet')
     def task_list_for_sheet(self, request, pk=None):
         """Get list of all tasks for given sheet pk"""
         obj = self.get_queryset().filter(exam_sheet__pk=pk)
         return Response(self.get_serializer(obj, many=True).data)
-    
+
+    @action(
+        detail=True, url_path='answer', url_name='answer', methods=['get', 'patch'],
+        permission_classes=[IsAuthenticated, IsStudentOrOwnerOrReadOnly]
+        )
+    def answer(self, request, pk=None):
+        """View for sending answer by student"""
+        obj = self.get_object()
+        serializer = ExamTaskStudentSerializer(obj, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )

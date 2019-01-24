@@ -32,6 +32,16 @@ def exam_tasks_for_sheet(exam_sheet_id):
     return reverse('exam:examtask-sheet', args=[exam_sheet_id])
 
 
+def exam_task_detail(exam_task_id):
+    """Return url for exam task detail"""
+    return reverse('exam:examtask-detail', args=[exam_task_id])
+
+
+def exam_task_answer(exam_task_id):
+    """Return url for exam answer view"""
+    return reverse('exam:examtask-answer', args=[exam_task_id])
+
+
 class PublicExamApiTests(TestCase):
     """Test if exam API is available without login"""
 
@@ -347,7 +357,7 @@ class PublicExamTaskApiTests(TestCase):
 
     def test_exam_task_without_login(self):
         """Test if login is required for retrieving exam tasks"""
-        
+
         res = self.client.get(EXAM_TASK_URL)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -362,7 +372,7 @@ class PrivateExamTaskApiTests(TestCase):
         )
         self.client = APIClient()
         self.client.force_authenticate(self.user)
-    
+
     def test_exam_task_list_for_exam_sheet(self):
         """Test that view list all exam tasks for given exam sheet"""
         exam_sheet = ExamSheet.objects.create(
@@ -389,7 +399,7 @@ class PrivateExamTaskApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertIn(serializer.data, res.data)
-    
+
     def test_exam_task_list_for_user(self):
         """Test that view list all exam tasks for given user"""
         user2 = get_user_model().objects.create_user(
@@ -408,7 +418,7 @@ class PrivateExamTaskApiTests(TestCase):
             exam_sheet=exam_sheet,
             title='Test title'
         )
-        exam_task2 = ExamTask.objects.create(
+        ExamTask.objects.create(
             exam_sheet=exam_sheet2,
             title='Test title2'
         )
@@ -419,3 +429,138 @@ class PrivateExamTaskApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertIn(serializer.data, res.data)
+
+    def test_create_exam_task_successful(self):
+        """Test creating a new exam sheet"""
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description='Test'
+        )
+        payload = {
+            'exam_sheet': exam_sheet.pk,
+            'title': 'Test title'
+        }
+
+        res = self.client.post(EXAM_TASK_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        exists = ExamTask.objects.filter(
+            exam_sheet=exam_sheet,
+            title=payload['title']
+        ).exists()
+
+        self.assertTrue(exists)
+
+    def test_create_exam_task_invalid(self):
+        """Test creating exam task with invalid payload"""
+        payload = {'exam_sheet': ''}
+        res = self.client.post(EXAM_TASK_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_student_can_change_answer(self):
+        """Test that student can change answer in exam task"""
+        user2 = get_user_model().objects.create_user(
+            username='testuser123',
+            password='testpassword123'
+        )
+        exam_sheet = ExamSheet.objects.create(
+            owner=user2,
+            description='Test description',
+            student=self.user
+        )
+        exam_task = ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title='Test',
+            answer=''
+        )
+        payload = {'answer': 'test answer'}
+
+        url = exam_task_answer(exam_task.id)
+        self.client.patch(url, payload)
+
+        exam_task.refresh_from_db()
+        
+        self.assertEqual(exam_task.answer, payload['answer'])
+
+    def test_student_cant_change_more_than_answer(self):
+        """Test that student can change only the answer"""
+        user2 = get_user_model().objects.create_user(
+            username='testuser123',
+            password='testpassword'
+        )
+        exam_sheet = ExamSheet.objects.create(
+            owner=user2,
+            description='Test description',
+            student=self.user
+        )
+        title_check = 'test title'
+        answer_check = 'test answer'
+        exam_task = ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title=title_check,
+            answer=answer_check
+        )
+        payload = {
+            'title': 'New title',
+            'answer': 'New answer'
+        }
+
+        url = exam_task_answer(exam_task.id)
+        self.client.patch(url, payload)
+
+        exam_task.refresh_from_db()
+
+        self.assertEqual(exam_task.title, title_check)
+        self.assertEqual(exam_task.answer, payload['answer'])
+
+    def test_owner_can_edit(self):
+        """Test that owner can edit exam tasks"""
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description='test sheet'
+        )
+        exam_task = ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title='Test title',
+            answer='Test answer'
+        )
+        payload = {
+            'title': 'New title',
+            'answer': 'New answer'
+        }
+        url = exam_task_detail(exam_task.id)
+        self.client.patch(url, payload)
+
+        exam_task.refresh_from_db()
+
+        self.assertEqual(exam_task.title, payload['title'])
+        self.assertEqual(exam_task.answer, payload['answer'])
+
+    def test_not_owner_cant_edit(self):
+        """Test that only owner can change data in exam tasks"""
+        base_title = 'Check title'
+        user2 = get_user_model().objects.create_user(
+            username='testuser123',
+            password='testpassword123'
+        )
+        exam_sheet = ExamSheet.objects.create(
+            owner=user2,
+            description='Test description'
+        )
+        exam_task = ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title=base_title,
+            answer='test answer'
+        )
+        payload = {
+            'title': 'new title',
+            'answer': 'new answer'
+        }
+        url = exam_task_detail(exam_task.id)
+        res = self.client.patch(url, payload)
+
+        exam_task.refresh_from_db()
+
+        self.assertEqual(exam_task.title, base_title)

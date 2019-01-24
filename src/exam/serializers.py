@@ -23,8 +23,24 @@ class ExamTaskSerializer(serializers.ModelSerializer):
     """Serializer for exam task"""
     class Meta:
         model = ExamTask
-        fields = ('id', 'exam_sheet', 'title', 'description', 'answer', 'points')
+        fields = (
+            'id', 'exam_sheet', 'title',
+            'description', 'answer', 'points'
+        )
         read_only_fields = ('id',)
+
+
+class ExamTaskStudentSerializer(serializers.ModelSerializer):
+    """Exam task serializer for student"""
+    
+    class Meta:
+        model = ExamTask
+        fields = (
+            'title', 'description', 'answer',
+        )
+        read_only_fields = (
+            'title', 'description',
+        )
 
 
 class ExamSheetDetailSerializer(ExamSheetSerializer):
