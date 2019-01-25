@@ -17,6 +17,41 @@ NO_FILTERING_EXAM_SHEETS_URL = reverse('exam:examsheet-nofilter')
 EXAM_TASK_URL = reverse('exam:examtask-list')
 
 
+def sample_user(username='testusername', password='testpassword123'):
+    """Create and return sample user"""
+    return get_user_model().objects.create_user(
+        username=username,
+        password=password
+    )
+
+
+def sample_exam_sheet(
+        owner, description='Test description',
+        is_archived=False, grade='Z', student=None
+    ):
+    """Create and return sample exam sheet"""
+    return ExamSheet.objects.create(
+        owner=owner, 
+        description=description,
+        is_archived=is_archived,
+        grade=grade,
+        student=student
+    )
+
+def sample_exam_task(
+        exam_sheet, title='Test title', 
+        description=None, answer=None, points=None
+    ):
+    """Create and return sample exam task"""
+    return ExamTask.objects.create(
+        exam_sheet=exam_sheet,
+        title=title,
+        description=description,
+        answer=answer,
+        points=points
+        )
+
+
 def detail_url(exam_sheet_id):
     """Return exam sheet detail url"""
     return reverse('exam:examsheet-detail', args=[exam_sheet_id])
@@ -59,24 +94,15 @@ class PrivateExamApiTests(TestCase):
     """Test the authorized user exam API"""
 
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username='testuser',
-            password='testpassword'
-        )
+        self.user = sample_user()
         self.client = APIClient()
         self.client.force_authenticate(self.user)
 
     def test_retrieve_exam_sheet_list(self):
         """Test retrieving owned exam sheet list """
 
-        ExamSheet.objects.create(
-            owner=self.user,
-            description='Short description'
-        )
-        ExamSheet.objects.create(
-            owner=self.user,
-            description='Short description 2'
-        )
+        sample_exam_sheet(owner=self.user)
+        sample_exam_sheet(owner=self.user)
 
         res = self.client.get(EXAM_SHEETS_URL)
 
@@ -88,15 +114,12 @@ class PrivateExamApiTests(TestCase):
 
     def test_retreive_exam_sheet_list_limited_to_user(self):
         """Test that exam sheets returned are for authenticated user"""
-        user2 = get_user_model().objects.create_user(
-            username='test2',
-            password='testpass123'
-        )
-        ExamSheet.objects.create(
+        user2 = sample_user(username='test2')
+        sample_exam_sheet(
             owner=user2,
             description='Short description'
         )
-        exam_sheet = ExamSheet.objects.create(
+        exam_sheet = sample_exam_sheet(
             owner=self.user,
             description='Test description'
         )
@@ -132,12 +155,12 @@ class PrivateExamApiTests(TestCase):
 
     def test_retreive_exam_list_with_archived_status(self):
         """Test that exam list doesn't show archived exam sheets"""
-        archived = ExamSheet.objects.create(
+        archived = sample_exam_sheet(
             owner=self.user,
             description='Test object',
             is_archived=True
         )
-        valid_sheet = ExamSheet.objects.create(
+        valid_sheet = sample_exam_sheet(
             owner=self.user,
             description='2nd Test object',
         )
@@ -152,19 +175,13 @@ class PrivateExamApiTests(TestCase):
 
     def test_retrieve_exam_sheet_detail(self):
         """Test viewing an exam_sheet detail"""
-        exam_sheet1 = ExamSheet.objects.create(
-            owner=self.user,
-            description='Test sheet',
-        )
-        exam_sheet2 = ExamSheet.objects.create(
-            owner=self.user,
-            description='Test sheet 2'
-        )
-        exam_task1 = ExamTask.objects.create(
+        exam_sheet1 = sample_exam_sheet(owner=self.user)
+        exam_sheet2 = sample_exam_sheet(owner=self.user)
+        exam_task1 = sample_exam_task(
             exam_sheet=exam_sheet1,
             title='Test title'
         )
-        exam_task2 = ExamTask.objects.create(
+        exam_task2 = sample_exam_task(
             exam_sheet=exam_sheet2,
             title='Test title 2'
         )
@@ -184,7 +201,7 @@ class PrivateExamApiTests(TestCase):
     def test_partial_update_exam_sheet(self):
         """Test updating exam sheet with patch"""
         grade = 'F'
-        exam_sheet = ExamSheet.objects.create(
+        exam_sheet = sample_exam_sheet(
             owner=self.user,
             description='Test description',
             grade=grade
@@ -201,7 +218,7 @@ class PrivateExamApiTests(TestCase):
 
     def test_full_update_exam_sheet(self):
         """Test updating a exam sheet with put"""
-        exam_sheet = ExamSheet.objects.create(
+        exam_sheet = sample_exam_sheet(
             owner=self.user,
             description='Test description',
             grade='F'
@@ -220,12 +237,9 @@ class PrivateExamApiTests(TestCase):
     
     def test_update_as_not_owner(self):
         """Test that it's impossible to update sheet as not owner"""
-        user2 = get_user_model().objects.create_user(
-            username='testuser123',
-            password='testpassword123'
-        )
+        user2 = sample_user(username='testuser123')
         grade_check = 'D'
-        exam_sheet = ExamSheet.objects.create(
+        exam_sheet = sample_exam_sheet(
             owner=user2,
             description='Test description',
             grade=grade_check
@@ -244,12 +258,12 @@ class PrivateExamApiTests(TestCase):
 
     def test_archived_exam_sheet_list(self):
         """Test list archived sheets view """
-        ExamSheet.objects.create(
+        sample_exam_sheet(
             owner=self.user,
             description='archived sheet',
             is_archived=True
         )
-        ExamSheet.objects.create(
+        sample_exam_sheet(
             owner=self.user,
             description='active sheet'
         )
@@ -271,7 +285,7 @@ class PrivateExamApiTests(TestCase):
 
     def test_change_status_to_archive_true(self):
         """Test that archive view can change exam sheet status to true"""
-        exam_sheet = ExamSheet.objects.create(
+        exam_sheet = sample_exam_sheet(
             owner=self.user,
             description='Test description',
             is_archived=False
@@ -286,7 +300,7 @@ class PrivateExamApiTests(TestCase):
 
     def test_change_status_to_archive_false(self):
         """Test that archive view can change exam sheet status to false"""
-        exam_sheet = ExamSheet.objects.create(
+        exam_sheet = sample_exam_sheet(
             owner=self.user,
             description='Test description',
             is_archived=True
@@ -301,11 +315,8 @@ class PrivateExamApiTests(TestCase):
 
     def test_change_status_to_archive_not_as_user(self):
         """Test that only owner can chagne archive status"""
-        user2 = get_user_model().objects.create_user(
-            username='testuser2',
-            password='testpassword123'
-        )
-        exam_sheet = ExamSheet.objects.create(
+        user2 = sample_user(username='testuser2')
+        exam_sheet = sample_exam_sheet(
             owner=user2,
             description='Test desc',
             is_archived=False
@@ -318,7 +329,7 @@ class PrivateExamApiTests(TestCase):
 
     # def test_change_status_to_archive_true(self):
     #     """Test that archive view can change exam sheet status to true"""
-    #     exam_sheet = ExamSheet.objects.create(
+    #     exam_sheet = sample_exam_sheet(
     #         owner=self.user,
     #         description='Test description',
     #         is_archived=False
@@ -333,7 +344,7 @@ class PrivateExamApiTests(TestCase):
 
     # def test_change_status_to_archive_false(self):
     #     """Test that archive view can change exam sheet status to false"""
-    #     exam_sheet = ExamSheet.objects.create(
+    #     exam_sheet = sample_exam_sheet(
     #         owner=self.user,
     #         description='Test description',
     #         is_archived=True
@@ -348,11 +359,8 @@ class PrivateExamApiTests(TestCase):
 
     # def test_change_status_to_archive_not_as_user(self):
     #     """Test that only owner can chagne archive status"""
-    #     user2 = get_user_model().objects.create_user(
-    #         username='testuser2',
-    #         password='testpassword123'
-    #     )
-    #     exam_sheet = ExamSheet.objects.create(
+    #     user2 = sample_user(username='testuser2')
+    #     exam_sheet = sample_exam_sheet(
     #         owner=user2,
     #         description='Test desc',
     #         is_archived=False
@@ -365,14 +373,8 @@ class PrivateExamApiTests(TestCase):
 
     def test_exam_sheet_deletion(self):
         """Test that owner can delete exam_sheet object"""
-        exam_sheet = ExamSheet.objects.create(
-            owner=self.user,
-            description="Test 1"
-        )
-        exam_sheet2 = ExamSheet.objects.create(
-            owner=self.user,
-            description="Test 2"
-        )
+        exam_sheet = sample_exam_sheet(owner=self.user)
+        exam_sheet2 = sample_exam_sheet(owner=self.user)
         url = detail_url(exam_sheet.id)
         self.client.delete(url)
 
@@ -383,14 +385,8 @@ class PrivateExamApiTests(TestCase):
     
     def test_exam_sheet_deletion_by_not_user(self):
         """Test that not owner can't delete exam_sheet"""
-        user2 = get_user_model().objects.create_user(
-            username='testuser123',
-            password='testpassword123'
-        )
-        exam_sheet = ExamSheet.objects.create(
-            owner=user2,
-            description='test description'
-        )
+        user2 = sample_user(username='testuser123')
+        exam_sheet = sample_exam_sheet(owner=user2)
         url = detail_url(exam_sheet.id)
         self.client.delete(url)
 
@@ -401,23 +397,11 @@ class PrivateExamApiTests(TestCase):
 
     def test_exam_sheet_list_without_filtering(self):
         """Test view that shows every exam sheet"""
-        user2 = get_user_model().objects.create_user(
-            username='testuser2',
-            password='testpassword'
-        )
-        ExamSheet.objects.create(
-            owner=self.user,
-            description="Test sheet"
-        )
-        ExamSheet.objects.create(
-            owner=self.user,
-            description='Test sheet2',
-            is_archived=True
-        )
-        ExamSheet.objects.create(
-            owner=user2,
-            description='Test sheet3'
-        )
+        user2 = sample_user(username='testuser2')
+
+        sample_exam_sheet(owner=self.user)
+        sample_exam_sheet(owner=self.user,is_archived=True)
+        sample_exam_sheet(owner=user2)
 
         res = self.client.get(NO_FILTERING_EXAM_SHEETS_URL)
 
@@ -426,22 +410,14 @@ class PrivateExamApiTests(TestCase):
 
     def test_exam_sheet_list_filter_by_students(self):
         """Test if passing student query param filters out sheets"""
-        user2 = get_user_model().objects.create_user(
-            username='testuser2',
-            password='testpassword123'
-        )
-        user3 = get_user_model().objects.create_user(
-            username='testuser3',
-            password='tespassword123'
-        )
-        exam_sheet = ExamSheet.objects.create(
+        user2 = sample_user(username='testuser2')
+        user3 = sample_user(username='testuser3')
+        exam_sheet = sample_exam_sheet(
             owner=self.user,
-            description='Test 1',
             student=user2
         )
-        exam_sheet2 = ExamSheet.objects.create(
+        exam_sheet2 = sample_exam_sheet(
             owner=self.user,
-            description='Test 2',
             student=user3
         )
         res = self.client.get(
@@ -472,28 +448,19 @@ class PrivateExamTaskApiTests(TestCase):
     """Test exam task api with authorized user"""
 
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username='arturbartecki',
-            password='testpassword'
-        )
+        self.user = sample_user()
         self.client = APIClient()
         self.client.force_authenticate(self.user)
 
     def test_exam_task_list_for_exam_sheet(self):
         """Test that view list all exam tasks for given exam sheet"""
-        exam_sheet = ExamSheet.objects.create(
-            owner=self.user,
-            description="test exam sheet"
-        )
-        exam_sheet2 = ExamSheet.objects.create(
-            owner=self.user,
-            description='Test exam sheet 2'
-        )
-        exam_task = ExamTask.objects.create(
+        exam_sheet = sample_exam_sheet(owner=self.user)
+        exam_sheet2 = sample_exam_sheet(owner=self.user)
+        exam_task = sample_exam_task(
             exam_sheet=exam_sheet,
             title='Task 1'
         )
-        ExamTask.objects.create(
+        sample_exam_task(
             exam_sheet=exam_sheet2,
             title='Task 2'
         )
@@ -508,23 +475,14 @@ class PrivateExamTaskApiTests(TestCase):
 
     def test_exam_task_list_for_user(self):
         """Test that view list all exam tasks for given user"""
-        user2 = get_user_model().objects.create_user(
-            username='testuser123',
-            password='testpassword123'
-        )
-        exam_sheet = ExamSheet.objects.create(
-            owner=self.user,
-            description="test description"
-        )
-        exam_sheet2 = ExamSheet.objects.create(
-            owner=user2,
-            description='Test description2'
-        )
-        exam_task = ExamTask.objects.create(
+        user2 = sample_user(username='testuser123')
+        exam_sheet = sample_exam_sheet(owner=self.user)
+        exam_sheet2 = sample_exam_sheet(owner=user2)
+        exam_task = sample_exam_task(
             exam_sheet=exam_sheet,
             title='Test title'
         )
-        ExamTask.objects.create(
+        sample_exam_task(
             exam_sheet=exam_sheet2,
             title='Test title2'
         )
@@ -538,10 +496,7 @@ class PrivateExamTaskApiTests(TestCase):
 
     def test_create_exam_task_successful(self):
         """Test creating a new exam sheet"""
-        exam_sheet = ExamSheet.objects.create(
-            owner=self.user,
-            description='Test'
-        )
+        exam_sheet = sample_exam_sheet(owner=self.user)
         payload = {
             'exam_sheet': exam_sheet.pk,
             'title': 'Test title'
@@ -567,16 +522,12 @@ class PrivateExamTaskApiTests(TestCase):
 
     def test_student_can_change_answer(self):
         """Test that student can change answer in exam task"""
-        user2 = get_user_model().objects.create_user(
-            username='testuser123',
-            password='testpassword123'
-        )
-        exam_sheet = ExamSheet.objects.create(
+        user2 = sample_user(username='testuser123')
+        exam_sheet = sample_exam_sheet(
             owner=user2,
-            description='Test description',
             student=self.user
         )
-        exam_task = ExamTask.objects.create(
+        exam_task = sample_exam_task(
             exam_sheet=exam_sheet,
             title='Test',
             answer=''
@@ -592,18 +543,14 @@ class PrivateExamTaskApiTests(TestCase):
 
     def test_student_cant_change_more_than_answer(self):
         """Test that student can change only the answer"""
-        user2 = get_user_model().objects.create_user(
-            username='testuser123',
-            password='testpassword'
-        )
-        exam_sheet = ExamSheet.objects.create(
+        user2 = sample_user(username='testuser123')
+        exam_sheet = sample_exam_sheet(
             owner=user2,
-            description='Test description',
             student=self.user
         )
         title_check = 'test title'
         answer_check = 'test answer'
-        exam_task = ExamTask.objects.create(
+        exam_task = sample_exam_task(
             exam_sheet=exam_sheet,
             title=title_check,
             answer=answer_check
@@ -623,10 +570,7 @@ class PrivateExamTaskApiTests(TestCase):
 
     def test_owner_can_edit(self):
         """Test that owner can edit exam tasks"""
-        exam_sheet = ExamSheet.objects.create(
-            owner=self.user,
-            description='test sheet'
-        )
+        exam_sheet = sample_exam_sheet(owner=self.user)
         exam_task = ExamTask.objects.create(
             exam_sheet=exam_sheet,
             title='Test title',
@@ -647,14 +591,8 @@ class PrivateExamTaskApiTests(TestCase):
     def test_not_owner_cant_edit(self):
         """Test that only owner can change data in exam tasks"""
         base_title = 'Check title'
-        user2 = get_user_model().objects.create_user(
-            username='testuser123',
-            password='testpassword123'
-        )
-        exam_sheet = ExamSheet.objects.create(
-            owner=user2,
-            description='Test description'
-        )
+        user2 = sample_user(username='testuser123')
+        exam_sheet = sample_exam_sheet(owner=user2)
         exam_task = ExamTask.objects.create(
             exam_sheet=exam_sheet,
             title=base_title,
@@ -673,10 +611,7 @@ class PrivateExamTaskApiTests(TestCase):
 
     def test_owner_can_delete(self):
         """Test that owner can delete tasks"""
-        exam_sheet = ExamSheet.objects.create(
-            owner=self.user,
-            description='test description'
-        )
+        exam_sheet = sample_exam_sheet(owner=self.user)
         exam_task = ExamTask.objects.create(
             exam_sheet=exam_sheet,
             title='Test title'
@@ -696,14 +631,8 @@ class PrivateExamTaskApiTests(TestCase):
 
     def test_not_owner_cant_delete(self):
         """Test that only owner can delete tasks"""
-        user2 = get_user_model().objects.create_user(
-            username='testuser',
-            password='testpassword'
-        )
-        exam_sheet = ExamSheet.objects.create(
-            owner=user2,
-            description='Test sheet'
-        )
+        user2 = sample_user(username='testuser')
+        exam_sheet = sample_exam_sheet(owner=user2)
         exam_task = ExamTask.objects.create(
             exam_sheet=exam_sheet,
             title='Test title'
