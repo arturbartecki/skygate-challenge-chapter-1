@@ -22,6 +22,7 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Return queryset depending on action"""
         # Check if there is student query param
+        # It's possible to extend query params
         student = self.request.query_params.get('student')
         if student:
             self.queryset = self.queryset.filter(student=student)

@@ -217,6 +217,30 @@ class PrivateExamApiTests(TestCase):
         exam_sheet.refresh_from_db()
         self.assertEqual(exam_sheet.description, payload['description'])
         self.assertEqual(exam_sheet.grade, payload['grade'])
+    
+    def test_update_as_not_owner(self):
+        """Test that it's impossible to update sheet as not owner"""
+        user2 = get_user_model().objects.create_user(
+            username='testuser123',
+            password='testpassword123'
+        )
+        grade_check = 'D'
+        exam_sheet = ExamSheet.objects.create(
+            owner=user2,
+            description='Test description',
+            grade=grade_check
+        )
+        payload = {
+            'description': 'New description',
+            'grade': 'A'
+        }
+        url = detail_url(exam_sheet.id)
+        self.client.put(url, payload)
+
+        exam_sheet.refresh_from_db()
+
+        self.assertEqual(exam_sheet.grade, grade_check)
+        self.assertNotEqual(exam_sheet.description, payload['description'])
 
     def test_archived_exam_sheet_list(self):
         """Test list archived sheets view """
@@ -258,7 +282,7 @@ class PrivateExamApiTests(TestCase):
         exam_sheet.refresh_from_db()
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(exam_sheet.is_archived, True)
+        self.assertTrue(exam_sheet.is_archived)
 
     def test_change_status_to_archive_false(self):
         """Test that archive view can change exam sheet status to false"""
@@ -273,7 +297,24 @@ class PrivateExamApiTests(TestCase):
         exam_sheet.refresh_from_db()
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(exam_sheet.is_archived, False)
+        self.assertFalse(exam_sheet.is_archived)
+
+    def test_change_status_to_archive_not_as_user(self):
+        """Test that only owner can chagne archive status"""
+        user2 = get_user_model().objects.create_user(
+            username='testuser2',
+            password='testpassword123'
+        )
+        exam_sheet = ExamSheet.objects.create(
+            owner=user2,
+            description='Test desc',
+            is_archived=False
+        )
+        url = archive_sheet_url(exam_sheet.id)
+        res = self.client.get(url)
+        exam_sheet.refresh_from_db()
+
+        self.assertFalse(exam_sheet.is_archived)
 
     # def test_change_status_to_archive_true(self):
     #     """Test that archive view can change exam sheet status to true"""
@@ -288,7 +329,7 @@ class PrivateExamApiTests(TestCase):
     #     exam_sheet.refresh_from_db()
 
     #     self.assertEqual(res.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(exam_sheet.is_archived, True)
+    #     self.assertTrue(exam_sheet.is_archived)
 
     # def test_change_status_to_archive_false(self):
     #     """Test that archive view can change exam sheet status to false"""
@@ -303,10 +344,27 @@ class PrivateExamApiTests(TestCase):
     #     exam_sheet.refresh_from_db()
 
     #     self.assertEqual(res.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(exam_sheet.is_archived, False)
+    #     self.assertFalse(exam_sheet.is_archived)
+
+    # def test_change_status_to_archive_not_as_user(self):
+    #     """Test that only owner can chagne archive status"""
+    #     user2 = get_user_model().objects.create_user(
+    #         username='testuser2',
+    #         password='testpassword123'
+    #     )
+    #     exam_sheet = ExamSheet.objects.create(
+    #         owner=user2,
+    #         description='Test desc',
+    #         is_archived=False
+    #     )
+    #     url = archive_sheet_url(exam_sheet.id)
+    #     res = self.client.patch(url)
+    #     exam_sheet.refresh_from_db()
+
+    #     self.assertFalse(exam_sheet.is_archived)
 
     def test_exam_sheet_deletion(self):
-        """Test that viewset can delete exam_sheet object"""
+        """Test that owner can delete exam_sheet object"""
         exam_sheet = ExamSheet.objects.create(
             owner=self.user,
             description="Test 1"
@@ -322,6 +380,24 @@ class PrivateExamApiTests(TestCase):
 
         self.assertEqual(len(sheets_left), 1)
         self.assertIn(exam_sheet2, sheets_left)
+    
+    def test_exam_sheet_deletion_by_not_user(self):
+        """Test that not owner can't delete exam_sheet"""
+        user2 = get_user_model().objects.create_user(
+            username='testuser123',
+            password='testpassword123'
+        )
+        exam_sheet = ExamSheet.objects.create(
+            owner=user2,
+            description='test description'
+        )
+        url = detail_url(exam_sheet.id)
+        self.client.delete(url)
+
+        sheets_left = ExamSheet.objects.all()
+
+        self.assertEqual(len(sheets_left), 1)
+        self.assertIn(exam_sheet, sheets_left)
 
     def test_exam_sheet_list_without_filtering(self):
         """Test view that shows every exam sheet"""
@@ -377,6 +453,7 @@ class PrivateExamApiTests(TestCase):
 
         self.assertIn(serializer1.data, res.data)
         self.assertNotIn(serializer2.data, res.data)
+
 
 class PublicExamTaskApiTests(TestCase):
     """Test if exam task API is available without login"""
@@ -594,3 +671,47 @@ class PrivateExamTaskApiTests(TestCase):
 
         self.assertEqual(exam_task.title, base_title)
 
+    def test_owner_can_delete(self):
+        """Test that owner can delete tasks"""
+        exam_sheet = ExamSheet.objects.create(
+            owner=self.user,
+            description='test description'
+        )
+        exam_task = ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title='Test title'
+        )
+        exam_task2 = ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title='test title 2'
+        )
+        url = exam_task_detail(exam_task2.id)
+        self.client.delete(url)
+
+        task_list = ExamTask.objects.all()
+
+        self.assertEqual(len(task_list), 1)
+        self.assertIn(exam_task, task_list)
+        self.assertNotIn(exam_task2, task_list)
+
+    def test_not_owner_cant_delete(self):
+        """Test that only owner can delete tasks"""
+        user2 = get_user_model().objects.create_user(
+            username='testuser',
+            password='testpassword'
+        )
+        exam_sheet = ExamSheet.objects.create(
+            owner=user2,
+            description='Test sheet'
+        )
+        exam_task = ExamTask.objects.create(
+            exam_sheet=exam_sheet,
+            title='Test title'
+        )
+        url = exam_task_detail(exam_task.id)
+        self.client.delete(url)
+
+        task_list = ExamTask.objects.all()
+
+        self.assertEqual(len(task_list), 1)
+        self.assertIn(exam_task, task_list)
