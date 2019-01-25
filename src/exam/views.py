@@ -8,7 +8,7 @@ from exam.models import ExamSheet, ExamTask
 from exam.serializers import ExamSheetSerializer, ExamSheetDetailSerializer, \
                             ExamSheetArchiveSerializer, ExamTaskSerializer, \
                             ExamTaskStudentSerializer
-from exam.permissions import IsOwnerOrReadOnly,IsExamTaskOwnerOrReadOnly, \
+from exam.permissions import IsOwnerOrReadOnly, IsExamTaskOwnerOrReadOnly, \
                             IsStudentOrOwnerOrReadOnly
 
 
@@ -128,7 +128,6 @@ class ExamSheetViewSet(viewsets.ModelViewSet):
     @action(detail=False, url_path='nofilter', url_name='nofilter')
     def not_filtered_list(self, request):
         """Get list of every sheet"""
-        # print(self.action)
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
@@ -161,7 +160,8 @@ class ExamTaskViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(obj, many=True).data)
 
     @action(
-        detail=True, url_path='answer', url_name='answer', methods=['get', 'patch'],
+        detail=True, url_path='answer',
+        url_name='answer', methods=['get', 'patch'],
         permission_classes=[IsAuthenticated, IsStudentOrOwnerOrReadOnly]
         )
     def answer(self, request, pk=None):

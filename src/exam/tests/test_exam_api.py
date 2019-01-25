@@ -28,20 +28,21 @@ def sample_user(username='testusername', password='testpassword123'):
 def sample_exam_sheet(
         owner, description='Test description',
         is_archived=False, grade='Z', student=None
-    ):
+        ):
     """Create and return sample exam sheet"""
     return ExamSheet.objects.create(
-        owner=owner, 
+        owner=owner,
         description=description,
         is_archived=is_archived,
         grade=grade,
         student=student
     )
 
+
 def sample_exam_task(
-        exam_sheet, title='Test title', 
+        exam_sheet, title='Test title',
         description=None, answer=None, points=None
-    ):
+        ):
     """Create and return sample exam task"""
     return ExamTask.objects.create(
         exam_sheet=exam_sheet,
@@ -234,7 +235,7 @@ class PrivateExamApiTests(TestCase):
         exam_sheet.refresh_from_db()
         self.assertEqual(exam_sheet.description, payload['description'])
         self.assertEqual(exam_sheet.grade, payload['grade'])
-    
+
     def test_update_as_not_owner(self):
         """Test that it's impossible to update sheet as not owner"""
         user2 = sample_user(username='testuser123')
@@ -322,7 +323,7 @@ class PrivateExamApiTests(TestCase):
             is_archived=False
         )
         url = archive_sheet_url(exam_sheet.id)
-        res = self.client.get(url)
+        self.client.get(url)
         exam_sheet.refresh_from_db()
 
         self.assertFalse(exam_sheet.is_archived)
@@ -382,7 +383,7 @@ class PrivateExamApiTests(TestCase):
 
         self.assertEqual(len(sheets_left), 1)
         self.assertIn(exam_sheet2, sheets_left)
-    
+
     def test_exam_sheet_deletion_by_not_user(self):
         """Test that not owner can't delete exam_sheet"""
         user2 = sample_user(username='testuser123')
@@ -400,7 +401,7 @@ class PrivateExamApiTests(TestCase):
         user2 = sample_user(username='testuser2')
 
         sample_exam_sheet(owner=self.user)
-        sample_exam_sheet(owner=self.user,is_archived=True)
+        sample_exam_sheet(owner=self.user, is_archived=True)
         sample_exam_sheet(owner=user2)
 
         res = self.client.get(NO_FILTERING_EXAM_SHEETS_URL)
@@ -538,7 +539,7 @@ class PrivateExamTaskApiTests(TestCase):
         self.client.patch(url, payload)
 
         exam_task.refresh_from_db()
-        
+
         self.assertEqual(exam_task.answer, payload['answer'])
 
     def test_student_cant_change_more_than_answer(self):
@@ -603,7 +604,7 @@ class PrivateExamTaskApiTests(TestCase):
             'answer': 'new answer'
         }
         url = exam_task_detail(exam_task.id)
-        res = self.client.patch(url, payload)
+        self.client.patch(url, payload)
 
         exam_task.refresh_from_db()
 

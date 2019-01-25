@@ -32,7 +32,7 @@ class ExamTaskSerializer(serializers.ModelSerializer):
 
 class ExamTaskStudentSerializer(serializers.ModelSerializer):
     """Exam task serializer for student"""
-    
+
     class Meta:
         model = ExamTask
         fields = (
