@@ -8,11 +8,11 @@ How to start:
 4. Now go to http://127.0.0.1:8000/api/exam/exam-sheets/ or http://127.0.0.1:8000/api/exam/exam-tasks/ . To access data you will need to log in. Fixtures contains 5 users with different data. Users(format login:password): admin:testpassword, student1:testpassword , student2:testpassword , teacher1:testpassword, teacher2:testpassword
 5. User admin:testpassword has access to http://127.0.0.1:8000/admin
 
-Endpoints:
+* Endpoints:
     1. Exam Sheets:
     Views that shows details and list without filtering objects are editable only by owners (other users can only see data).
         - http://127.0.0.1:8000/api/exam/exam-sheets/ - returns list of exam sheets that logged user owns (request.user=owner), and that are not archived (is_archived=False), POST request creates new object with owner=request.user. Accepts queryparam student which shows list of sheets with given user.
-        - http://127.0.0.1:8000/api/exam/exam-sheets/archive - returns list of exam sheets that logged user owns, and that are archived(is_archived=True)
+        - http://127.0.0.1:8000/api/exam/exam-sheets/archive - returns list of exam sheets that logged user owns, and that are archived (is_archived=True)
         - http://127.0.0.1:8000/api/exam/exam-sheets/nofilter - returns list of exam sheets without filtering out
         - http://127.0.0.1:8000/api/exam/exam-sheets/1/ - returns details of exam sheet with id=1, owner can update and delete object
         - http://127.0.0.1:8000/api/exam/exam-sheets/1/archive/ - owner can change exam_sheet status is_archived to True/False, when accesing this endpoint
