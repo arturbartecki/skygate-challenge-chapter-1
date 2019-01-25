@@ -521,6 +521,22 @@ class PrivateExamTaskApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_only_owner_can_create_task(self):
+        """Test that only owner can add task to sheet"""
+        user2 = sample_user(username='studentuser')
+        exam_sheet = sample_exam_sheet(
+            owner=user2
+        )
+        payload = {
+            'exam_sheet': exam_sheet.id,
+            'title': 'test title'
+        }
+        self.client.post(EXAM_TASK_URL, payload)
+
+        exam_tasks = ExamTask.objects.all()
+
+        self.assertEqual(len(exam_tasks), 0)
+
     def test_student_can_change_answer(self):
         """Test that student can change answer in exam task"""
         user2 = sample_user(username='testuser123')

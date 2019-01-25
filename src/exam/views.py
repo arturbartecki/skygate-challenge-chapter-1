@@ -152,6 +152,13 @@ class ExamTaskViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         """Return appropriate serializer class for ExamTask viewset"""
         return self.serializer_class
+    
+    def perform_create(self, serializer):
+        """Create a new exam sheet"""
+        validated_data = serializer.validated_data
+        exam_sheet = validated_data['exam_sheet']
+        if exam_sheet.owner == self.request.user:
+            serializer.save()
 
     @action(detail=True, url_path='sheet', url_name='sheet')
     def task_list_for_sheet(self, request, pk=None):
