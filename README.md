@@ -1,10 +1,10 @@
 # skygate-challenge-chapter-1
-Solution to challenge from chapter 1
+Solution to challenge from chapter 1. Tested on Windows 10, python 3.6
 
-How to start:
+**How to start:**
 1. Clone or download repository
-2. Make sure you have Docker and python (it's tested on python 3.6+) installed
-3. Run python file 'run_script.py'. It should create docker image and install everything needed to run application. Fixtures for testing are attached in this command. Script should run application on http://127.0.0.1:8000/
+2. Make sure you have Docker(with docker container) and python (it's tested on python 3.6+) installed
+3. Run python file 'run_script.py', it's in main folder of repository. It should create docker image and install everything needed to run application. Fixtures for testing are attached in this command. Script should run application on http://127.0.0.1:8000/
 4. Now go to http://127.0.0.1:8000/api/exam/exam-sheets/ or http://127.0.0.1:8000/api/exam/exam-tasks/ . To access data you will need to log in. Fixtures contains 5 users with different data. Users(format login:password): admin:testpassword, student1:testpassword , student2:testpassword , teacher1:testpassword, teacher2:testpassword
 5. User admin:testpassword has access to http://127.0.0.1:8000/admin
 
@@ -20,3 +20,13 @@ How to start:
         - http://127.0.0.1:8000/api/exam/exam-tasks/1/ - returns details of exam task with id=1 . Owner can update and delete object
         - http://127.0.0.1:8000/api/exam/exam-tasks/1/answer - allows student to pass an answer to exam task
         - http://127.0.0.1:8000/api/exam/exam-tasks/1/sheet - returns list of tasks assigned to exam_sheet with id=1
+
+**Alternative way of starting app.**
+If you can't use Docker, or Docker settings doesn't work on your machine you can run project in few steps:
+1. Create virtualenv with python 3.6+
+2. In repository's main folder run: pip install -r requirements.txt
+3. Go to src folder
+4. Run commands:
+- python manage.py migrate 
+- python manage.py loaddata basefixture.json &&
+- python manage.py runserver
