@@ -1,0 +1,206 @@
+[
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$120000$VBLfSUniZXCb$rQ/umPjRhHbBOX1DpYzbkfMyxc7R6qR4wHZ+N3ILk+M=",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "student1",
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2019-01-25T12:52:58.110Z",
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 2,
+        "fields": {
+            "password": "pbkdf2_sha256$120000$qjp6A6PkbcY8$1oGZdU5p3evwCAH7t9Lz9nLsCBQowQBU3Nq1QVbViV4=",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "student2",
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2019-01-25T12:55:23.845Z",
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 3,
+        "fields": {
+            "password": "pbkdf2_sha256$120000$PVqlR0Lhddn8$MQZnCS+nB3YS0JDNFYc6jUEMvLLCani96SETntEFfR0=",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "teacher1",
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2019-01-25T12:55:44.653Z",
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 4,
+        "fields": {
+            "password": "pbkdf2_sha256$120000$fC1gVOR1PwpC$IQDrWdo+gkgiBNyFpEC2Es+CxO3AJShomedE7CwwKoI=",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "teacher2",
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2019-01-25T12:56:17.641Z",
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "exam.examsheet",
+        "pk": 1,
+        "fields": {
+            "owner": 3,
+            "student": 2,
+            "description": "Biology Test Sheet",
+            "grade": null,
+            "is_archived": true
+        }
+    },
+    {
+        "model": "exam.examsheet",
+        "pk": 2,
+        "fields": {
+            "owner": 4,
+            "student": 1,
+            "description": "History Test Exam Sheet",
+            "grade": null,
+            "is_archived": false
+        }
+    },
+    {
+        "model": "exam.examsheet",
+        "pk": 3,
+        "fields": {
+            "owner": 3,
+            "student": 1,
+            "description": "English Test Exam Sheet",
+            "grade": null,
+            "is_archived": false
+        }
+    },
+    {
+        "model": "exam.examtask",
+        "pk": 1,
+        "fields": {
+            "exam_sheet": 1,
+            "title": "Biology Recap 1",
+            "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque malesuada sem ut erat feugiat, sit amet congue tortor commodo. Nullam maximus justo in consectetur accumsan.",
+            "answer": "",
+            "points": null
+        }
+    },
+    {
+        "model": "exam.examtask",
+        "pk": 2,
+        "fields": {
+            "exam_sheet": 1,
+            "title": "Biology Recap 2",
+            "description": "Mauris accumsan, leo non pharetra bibendum, felis erat mattis nunc, in sodales eros quam nec nulla. Ut sollicitudin vehicula sem at congue. Duis ut leo lobortis, maximus ex in, porta nulla. Praesent tempor mollis tempus.",
+            "answer": "Biology answer",
+            "points": 8
+        }
+    },
+    {
+        "model": "exam.examtask",
+        "pk": 3,
+        "fields": {
+            "exam_sheet": 1,
+            "title": "Biology Recap 3",
+            "description": "Nullam tincidunt lectus eu velit aliquet, nec egestas velit mollis. Quisque metus dui, fringilla non pulvinar sed, blandit eu tellus. Donec vulputate ligula porta tortor consequat placerat.",
+            "answer": "",
+            "points": null
+        }
+    },
+    {
+        "model": "exam.examtask",
+        "pk": 4,
+        "fields": {
+            "exam_sheet": 2,
+            "title": "History Recap 1",
+            "description": "Suspendisse laoreet sit amet metus et pellentesque. Aliquam placerat consectetur ullamcorper. Sed ornare metus iaculis, posuere arcu in, scelerisque dui.",
+            "answer": "History answer",
+            "points": 10
+        }
+    },
+    {
+        "model": "exam.examtask",
+        "pk": 5,
+        "fields": {
+            "exam_sheet": 2,
+            "title": "History Recap 2",
+            "description": "Nam faucibus vel est id accumsan. Curabitur a pellentesque nisi. Maecenas dui est, tincidunt ut porta id, varius blandit diam.",
+            "answer": "",
+            "points": null
+        }
+    },
+    {
+        "model": "exam.examtask",
+        "pk": 6,
+        "fields": {
+            "exam_sheet": 2,
+            "title": "History Recap 3",
+            "description": "In posuere sapien vel rutrum placerat. Donec cursus nisl non ante egestas, in tincidunt eros egestas. Duis tempor justo volutpat, ultricies nulla id, porta lorem. Donec eu erat vulputate, eleifend ipsum quis, finibus diam.",
+            "answer": "",
+            "points": null
+        }
+    },
+    {
+        "model": "exam.examtask",
+        "pk": 7,
+        "fields": {
+            "exam_sheet": 3,
+            "title": "English Recap 1",
+            "description": "Praesent et congue augue. Pellentesque lobortis quam eu ante pellentesque congue. Fusce lacinia eu arcu at egestas.",
+            "answer": "",
+            "points": null
+        }
+    },
+    {
+        "model": "exam.examtask",
+        "pk": 8,
+        "fields": {
+            "exam_sheet": 3,
+            "title": "English Recap 2",
+            "description": "Maecenas eleifend quam nec malesuada tincidunt. Morbi leo dolor, venenatis a faucibus quis, rhoncus eget dolor.",
+            "answer": "Answer 5",
+            "points": 5
+        }
+    },
+    {
+        "model": "exam.examtask",
+        "pk": 9,
+        "fields": {
+            "exam_sheet": 3,
+            "title": "English Recap 3",
+            "description": "Ut purus neque, fringilla nec augue id, tincidunt tincidunt ante. Fusce sit amet nibh sed eros congue cursus sed in erat. Donec lobortis orci eget quam facilisis, at congue enim interdum.",
+            "answer": "",
+            "points": null
+        }
+    }
+]

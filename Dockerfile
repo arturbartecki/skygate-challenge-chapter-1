@@ -10,5 +10,8 @@ RUN mkdir /src
 WORKDIR /src
 COPY ./src /src
 
+RUN python manage.py migrate
+RUN python manage.py loaddata basefixture.json
+
 RUN adduser -D user
 USER user
